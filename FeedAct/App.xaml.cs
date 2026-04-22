@@ -1,4 +1,5 @@
-﻿namespace FeedAct
+﻿
+namespace FeedAct
 {
     public partial class App : Application
     {

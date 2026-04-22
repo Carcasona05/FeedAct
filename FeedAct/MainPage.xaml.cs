@@ -1,24 +1,51 @@
-﻿namespace FeedAct
+﻿using System.Collections.ObjectModel;
+using FeedAct.Models;
+
+namespace FeedAct;
+
+public partial class MainPage : ContentPage
 {
-    public partial class MainPage : ContentPage
+    private readonly ObservableCollection<PostViewModel> _posts = new();
+
+    public MainPage()
     {
-        int count = 0;
+        InitializeComponent();
 
-        public MainPage()
+        FeedCollection.ItemsSource = _posts;
+    }
+
+    private async void OnAddPostClicked(object? sender, EventArgs e)
+    {
+        var addPage = new AddPostPage();
+        addPage.Disappearing += (s, args) =>
         {
-            InitializeComponent();
-        }
+            if (addPage.NewPost is not null)
+            {
+                _posts.Insert(0, new PostViewModel(addPage.NewPost));
+            }
+        };
+        await Navigation.PushModalAsync(new NavigationPage(addPage));
+    }
 
-        private void OnCounterClicked(object? sender, EventArgs e)
+    private async void OnCommentsClicked(object? sender, TappedEventArgs e)
+    {
+        if (sender is Label label && label.BindingContext is PostViewModel vm)
         {
-            count++;
-
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
+            await Navigation.PushModalAsync(new NavigationPage(new PostDetailPage(vm.Post)));
         }
     }
+}
+
+public class PostViewModel
+{
+    public Post Post { get; }
+    public string Author => Post.Author;
+    public string Content => Post.Content;
+    public string? ImagePath => Post.ImagePath;
+    public bool HasImage => !string.IsNullOrEmpty(Post.ImagePath);
+    public DateTime CreatedAt => Post.CreatedAt;
+    public string VisibilityIcon => Post.IsPublic ? "🌐" : "🔒";
+    public string TimeAgo => CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt");
+
+    public PostViewModel(Post post) => Post = post;
 }
