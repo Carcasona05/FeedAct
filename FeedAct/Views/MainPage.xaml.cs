@@ -1,33 +1,49 @@
 ﻿using System.Collections.ObjectModel;
-using FeedAct.Models;
+using FeedAct.Entities;
+using FeedAct.Services;
 
-namespace FeedAct;
+namespace FeedAct.Views;
 
 public partial class MainPage : ContentPage
 {
+    private readonly DatabaseService _db;
     private readonly ObservableCollection<PostViewModel> _posts = new();
 
     public MainPage()
     {
         InitializeComponent();
 
+        _db = new DatabaseService();
         FeedCollection.ItemsSource = _posts;
+
+        LoadPosts();
     }
 
-    private async void OnAddPostClicked(object? sender, EventArgs e)
+    private async void LoadPosts()
     {
-        var addPage = new AddPostPage();
-        addPage.Disappearing += (s, args) =>
+        var posts = await _db.GetPostsAsync();
+
+        _posts.Clear();
+        foreach (var post in posts)
         {
-            if (addPage.NewPost is not null)
-            {
-                _posts.Insert(0, new PostViewModel(addPage.NewPost));
-            }
-        };
-        await Navigation.PushModalAsync(new NavigationPage(addPage));
+            _posts.Add(new PostViewModel(post));
+        }
     }
 
-    private async void OnCommentsClicked(object? sender, TappedEventArgs e)
+   private async void OnAddPostClicked(object sender, EventArgs e)
+{
+    var addPage = new AddPostPage();
+
+    await Navigation.PushModalAsync(new NavigationPage(addPage));
+
+    // wait until page closes
+    addPage.Disappearing += (s, args) =>
+    {
+        LoadPosts(); // always refresh when returning
+    };
+}
+
+    private async void OnCommentsClicked(object sender, TappedEventArgs e)
     {
         if (sender is Label label && label.BindingContext is PostViewModel vm)
         {
@@ -39,6 +55,7 @@ public partial class MainPage : ContentPage
 public class PostViewModel
 {
     public Post Post { get; }
+
     public string Author => Post.Author;
     public string Content => Post.Content;
     public string? ImagePath => Post.ImagePath;
@@ -47,5 +64,8 @@ public class PostViewModel
     public string VisibilityIcon => Post.IsPublic ? "🌐" : "🔒";
     public string TimeAgo => CreatedAt.ToString("MMM dd, yyyy 'at' h:mm tt");
 
-    public PostViewModel(Post post) => Post = post;
+    public PostViewModel(Post post)
+    {
+        Post = post;
+    }
 }

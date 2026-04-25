@@ -1,11 +1,13 @@
-using FeedAct.Models;
+using FeedAct.Entities;
+using FeedAct.Services;
 
-namespace FeedAct;
+namespace FeedAct.Views;
 
 public partial class AddPostPage : ContentPage
 {
     public Post? NewPost { get; private set; }
     private string? _selectedImagePath;
+    private readonly DatabaseService _db = new();
 
     public AddPostPage()
     {
@@ -79,6 +81,17 @@ public partial class AddPostPage : ContentPage
             CreatedAt = DateTime.Now,
             IsPublic = VisibilitySwitch.IsToggled
         };
+
+        try
+        {
+            // Persist the new post to the database so MainPage reload will show it
+            await _db.SavePostAsync(NewPost!);
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"Failed to save post: {ex.Message}", "OK");
+            return;
+        }
 
         await Navigation.PopModalAsync();
     }
