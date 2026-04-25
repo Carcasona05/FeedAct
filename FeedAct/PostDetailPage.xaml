@@ -97,7 +97,7 @@ Shell.PresentationMode="Modal">
                                            HorizontalOptions="Center"
                                            Margin="0,16,0,4" />
 
-                                    <Label Text="Be the first to share your thoughts!"
+                                    <Label Text="Say something about this post."
                                            FontSize="14"
                                            TextColor="#888888"
                                            HorizontalOptions="Center" />
